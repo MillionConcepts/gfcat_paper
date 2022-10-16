@@ -1,2 +1,2 @@
 # gfcat_paper
-work in progress; caveat emptor
+summary article on the gfcat project --- this is a work in progress, caveat emptor
