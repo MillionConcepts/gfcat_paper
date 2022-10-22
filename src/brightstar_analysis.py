@@ -34,12 +34,12 @@ def find_bright_stars(catalog_file,header_data,
         visit = header_data.iloc[ix]
         eclipse = int(visit['ECLIPSE'])
         #print(eclipse)
-        if visit['EXPTIME']<1500.0:
+        if visit['EXPTIME']<1200.0:
             continue
         bright_stars = pq.read_table(catalog_filename,filters =
                                      [('aperture_sum_mask_n_51_2','=',0.0),
                                       ('aperture_sum_edge_n_51_2','=',0.0),
-                                      ('aperture_sum_n_51_2','>',2000.0),
+                                      ('aperture_sum_n_51_2','>',10000.0),
                                       ('eclipse','=',eclipse)]).to_pandas()
 
         cps = np.array(bright_stars['aperture_sum_n_12_8'])/visit['EXPT_0']
@@ -67,7 +67,7 @@ def find_bright_stars(catalog_file,header_data,
     print(n)
     return targets
 
-targets = find_bright_stars(catalog_file,header_data,n_ecl=5000,countrate_limit=50)
+targets = find_bright_stars(catalog_file,header_data,n_ecl=2000,countrate_limit=100)
 print(f"{len(targets)} sources in {len(np.unique(np.array(targets)[:,0]))} eclipses")
 
 for eclipse in np.unique(np.array(targets)[:,0]):

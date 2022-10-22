@@ -5,6 +5,8 @@ from rich import print
 import warnings
 import os
 from lightcurve_interface_skeleton import load_lightcurve_records, load_exptime
+import datetime
+from astropy.time import Time
 
 def counts2mag(cps, band):
     scale = 18.82 if band == 'FUV' else 20.08
@@ -41,6 +43,12 @@ for flare in flare_list.iterrows():
                               [('eclipse','=',eclipse),
                                ('obj_id','=',obj_id)]).to_pandas()
     expt = header_data.loc[header_data['ECLIPSE']==eclipse].loc[header_data['BAND']=='NUV']['EXPT_0']
+    obstart = header_data.loc[header_data['ECLIPSE']==eclipse].loc[header_data['BAND']=='NUV']['T0_0']
+    GPSSECS = 315532800 + 432000
+    t = obstart.tolist()[0] + GPSSECS
+    dt = datetime.datetime.fromtimestamp(t)
+    this_star['datetime_iso'] = dt.isoformat().split('.')[0]
+    this_star['datetime_decimal'] = Time(dt,format='datetime').decimalyear
 
     obj_ids = this_star["obj_id"].tolist() # it should only contain one entry
     aper_radius = 12.8
@@ -85,6 +93,7 @@ for flare in flare_list.iterrows():
     flare_table = pd.concat([flare_table,
                              this_star[
                                  ["obj_id", "ra", "dec", "eclipse",
+                                  "datetime_iso", "datetime_decimal",
                                   "NUVmag", "NUVmag_err_1", "NUVmag_err_2",
-                                  "FUVmag", "FUVmag_err_1", "FUVmag_err_2"]]])
+                                  "FUVmag", "FUVmag_err_1", "FUVmag_err_2",]]])
 flare_table.to_csv('gfcat_flares.csv',index=None)
