@@ -220,8 +220,6 @@ def calculate_flare_energy(lc, frange, distance, binsize=30, band='NUV',
     else:
         q = quiescence[0]
 
-    # Convert from parsecs to cm
-    distance_cm = distance * 3.086e+18
     if 'cps_apcorrected' in lc.keys():
         # Converting from counts / sec to flux units.
         flare_flux = (np.array(counts2flux(
@@ -232,10 +230,16 @@ def calculate_flare_energy(lc, frange, distance, binsize=30, band='NUV',
         raise ValueError("Need aperture-corrected cps fluxes to continue.")
     # Zero any flux values where the flux is below the INFF so that we don't subtract from the total flux!
     flare_flux = np.array([0 if f < 0 else f for f in flare_flux])
+    # if only the last bin has zero exposure time, zero it and proceed
+    if not np.isfinite(flare_flux[-1]):
+        flare_flux[-1]=0
+    # if more bins than that, then bail out because this is a cursed lightcurve
+    if not all(np.isfinite(flare_flux)):
+        return np.nan, np.nan
     flare_flux_err = counts2flux(np.array(lc.iloc[frange]['cps_err']), band)
     tbins = (np.array(lc.iloc[frange]['t1'].values) -
              np.array(lc.iloc[frange]['t0'].values))
-    # Caluclate the area under the curve.
+    # Calculate the area under the curve.
     integrated_flux = (binsize*flare_flux).sum()
     """
     GALEX effective widths from
@@ -248,6 +252,11 @@ def calculate_flare_energy(lc, frange, distance, binsize=30, band='NUV',
     fluence = integrated_flux*effective_widths[band]
     fluence_err = (np.sqrt(((counts2flux(lc.iloc[frange]['cps_err'], band) *
                              binsize)**2).sum())*effective_widths[band])
+    if not distance:
+        return fluence, fluence_err
+    # Convert from parsecs to cm
+    distance_cm = distance * 3.086e+18
+
     energy = (4 * np.pi * (distance_cm**2) * fluence)
     energy_err = (4 * np.pi * (distance_cm**2) * fluence_err)
     return energy, energy_err
@@ -262,7 +271,8 @@ def is_right_censored(lc, frange):
 
 def peak_cps(lc, frange):
     """ Returns the peak cps in the light curve. """
-    return lc['cps_apcorrected'][np.argmax(np.array(lc['cps'][frange].values))]
+    return (lc['cps'][np.argmax(np.array(lc['cps'][frange].values))],
+            lc['cps_err'][np.argmax(np.array(lc['cps'][frange].values))])
 
 def peak_time(lc, frange, stepsz=30):
     """ Return the bin start time corresponding to peak flux. """

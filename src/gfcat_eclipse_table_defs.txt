@@ -1,0 +1,6 @@
+Eclipse Table : gfcat_eclipse_table.csv
+
+The GFCAT table of candidate eclipses contains one row for each lightcurve (source-visit)
+manually identified as morphologically consistent with a stellar eclipse. Its contents 
+are a strict subset of the rows of the GFCAT visit-level table, so all column definitions 
+can be found in gfcat_visit_table_defs.txt.
