@@ -1,0 +1,94 @@
+﻿lightcurve files
+These files provide lightcurves for all source-visits included in GFCAT, organized by GALEX eclipse number, band, and aperture size. The file naming convention is: 
+
+
+e{eclipse}-{band}d-30s-photom-{size}.csv
+
+
+* eclipse is 0-padded 5-digit GALEX eclipse number
+* band is ‘n’ for NUV, and ‘f’ for FUV
+* size is aperture size used to generate lightcurves in this file, given in arcseconds. If a decimal point would be present, it is replaced by an underscore.
+
+
+example: e07500-fd-30s-photom-17_5.csv contains FUV lightcurves for the three GFCAT sources observed in GALEX eclipse 7500, generated using apertures of 17.5”.
+
+
+format: Lightcurve files are ASCII comma-separated value (CSV) files, row-delimited by line-feed (\n) characters. They have a single header row with column names, followed by one or more rows corresponding to each GFCAT source observed during that GALEX eclipse. The columns of each file are:
+
+
+* ra: source right ascension (J2000 ICRS). For sources algorithmically detected by DAOPHOT, this value is computed from the WCS of the full-depth visit image by applying wcslib’s pix2world function to the aperture center (columns ‘xcenter’ & ‘ycenter’) used to compute photometry. For sources found by targeted search on a preexisting catalog, this value is directly propagated from that catalog. 
+* dec: source declination (J2000 ICRS). Provenance is the same as ra.
+* xcentroid: x position of source centroid, in image coordinates. For sources algorithmically detected by DAOPHOT, this is the value reported by DAOPHOT. For sources found by targeted search on a preexisting catalog, this value is computed from the WCS of the full-depth visit image by applying wcslib’s world2pix function to the ra/dec values propagated from that catalog.
+* ycentroid: y position of source centroid, in image coordinates. Provenance is the same as xcentroid.
+* xcenter: x position of aperture center, in image coordinates. This value is directly propagated from the output of photutils.aperture_photometry. This is identical to xcentroid in most cases.
+* xcenter: y position of aperture center, in image coordinates. This value is directly propagated from the output of photutils.aperture_photometry. This is identical to ycentroid in most cases.
+* aperture_sum: Calibrated photon count for this source across the entire visit: total counted photons scaled by detector-space-dependent response (and, for photons binned into pixels falling only partially within this aperture, spatial extent).
+* aperture_sum_mask: Calibrated photon count for this source across the entire visit, including only photons detected in regions covered by the hotspot mask. For most GFCAT sources, this is 0.
+* aperture_sum_edge: Calibrated photon count for this source across the entire visit, including only photons detected in regions falling within the detector edge mask. For most GFCAT sources, this is 0.
+* aperture_sum_{N}: Multiple columns, one for each 30-second bin in this lightcurve. Calibrated photon count for this source in bin number N (0-indexed).
+* aperture_sum_mask_{N}: Same, for photons falling within the detector hotspot mask.
+* aperture_sum_edge_{N}: Same, for photons falling within the detector edge mask.
+
+
+Note that GALEX eclipse number as specified by the filename, along with ra and dec, can be used as a pivot from lightcurve files to the visit-level GFCAT catalog.
+[a]
+exptime files
+These files provide bin positions and corrected exposure times for each GALEX eclipse that contains one or more GFCAT sources. The file naming convention is:
+
+
+e{eclipse}-nd-30s-exptime.csv, where eclipse is 0-padded 5-digit GALEX eclipse number.
+
+
+format: Exposure time files are ASCII comma-separated value (CSV) files, row-delimited by line-feed (\n) characters. Each begins with a single header row containing column names, followed by one row for each 30-second bin used to calculate the photometric quantities used in the corresponding GALEX eclipse’s lightcurve files. Columns are:
+
+
+* index column:  time bin number (0-indexed). Corresponds to bin number {N} in this GALEX eclipse’s lightcurve files.
+* expt: effective exposure time in seconds (raw exposure minus deadtime and shutter corrections).
+* t0: starting time value of bin in seconds (GALEX global event time scale).
+* t1: ending time value of bin in seconds (GALEX global event time scale).
+
+
+The effective exposure time values in these files may be used to convert the photon counts in their corresponding lightcurve files into flux densities and/or AB magnitudes. The standard conversions are:
+* AB Mag = -2.5 * log10(counts / second) + scale. ‘scale’ is 18.82 for FUV and 20.08 for NUV.
+* flux density = scale * counts / second. ‘scale’ is 1.4e-15 for FUV and 2.06e-16 for NUV. Units are ergs/(sec * cm^2 * A).
+
+
+context images
+These files provide rich visual representations of photometry and observational context. There is one context image for each source-visit included in GFCAT. The filename convention is:
+
+
+gfcat_{eclipse}_{visit_table_index}.jpg
+
+
+* eclipse is 0-padded 5-digit eclipse number
+* visit_table_index is row number of this source-visit in the GFCAT visit-level catalog.
+
+
+The image layout differs depending on whether or not an observation was conducted in both NUV and FUV or only in NUV.
+
+
+NUV + FUV images
+These images have four square image panes above three horizontal line graphs.
+
+
+The upper-left image pane displays the full-depth NUV image for this GALEX eclipse (in calibrated counts scaled by the zscale algorithm). The x-axis of this pane, labeled ‘galactic longitude’, is RA in J2000 ICRS; the y-axis, labeled ‘galactic latitude’, is DEC in J2000 ICRS. The yellow box in this pane denotes the bounds of the upper-right pane. The red circle within that box denotes the bounds of the apertures used to generate photometry for this source-visit.
+
+
+The upper-right pane is a detail of the upper-left pane – a square centered on the source, approximately 8 arcminutes on each side. Its axes are also in RA/DEC.  The three red circles overlaid on this image denote 17.5”, 25”, and 35” apertures around the source.
+
+
+The lower-left and lower-right panes duplicate the format of the upper-left and upper-right panes, but for FUV. Aperture overlays are in blue rather than red to help users distinguish bands at a glance.
+
+
+The first line graph (counting from the top) displays the NUV lightcurve in red. Its x axis, which is shared with the second and third line graphs, displays seconds from the beginning of the observation. Its y axis is NUV flux density in femtoerg / (sec * cm^2 * A). Error bars denote flux errors at 1 sigma; the shaded region denotes errors at 3 sigma. The dashed horizontal lines mark flux minima and maxima; AB Mag equivalents for these values are given on the right-hand y-axis spine.
+
+
+The second line graph duplicates this format for the FUV lightcurve in blue.
+
+
+The third line graph gives FUV/NUV flux ratio (“color”) in black. The error bars and shaded region similarly denote 1-sigma and 3-sigma flux ratio errors for each bin.
+
+
+NUV-only observations
+These images have two square image panes above a single line graph. The left and right panes are the same as the upper-left and upper-right panes in NUV + FUV context images. The line graph is the same as the top line graph in NUV + FUV context images.
+[a]is there a pivot in an extended version of the object-level catalog? don't remember.
